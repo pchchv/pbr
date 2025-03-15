@@ -68,6 +68,31 @@ func (b *base) Sint32() (int32, error) {
 	return int32(unZig64(v)), err
 }
 
+// Fixed64 reads a fixed 8 byte value as an uint64.
+// This proto type is more efficient than uint64
+// if values are often greater than 2^56.
+func (b *base) Fixed64() (uint64, error) {
+	if len(b.Data) < b.Index+8 {
+		return 0, io.ErrUnexpectedEOF
+	}
+
+	v := binary.LittleEndian.Uint64(b.Data[b.Index:])
+	b.Index += 8
+	return v, nil
+}
+
+// Sfixed64 reads a fixed 8 byte signed value.
+func (b *base) Sfixed64() (int64, error) {
+	v, err := b.Fixed64()
+	return int64(v), err
+}
+
+// Varint64 reads up to 64-bits of variable-length encoded data.
+func (b *base) Varint64() (v uint64, err error) {
+	b.Index, v, err = varint64(b.Data, b.Index)
+	return v, err
+}
+
 func varint32(data []byte, index int) (int, uint32, error) {
 	var val uint32
 	shift := uint(0)
