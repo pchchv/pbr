@@ -36,3 +36,23 @@ func TestMessage_Varint64(t *testing.T) {
 		}
 	})
 }
+
+func compare(t *testing.T, v, expected interface{}) {
+	t.Helper()
+	// private fields don't work with reflect.DeepEqual, so marshaling json
+	vd, err := json.Marshal(v)
+	if err != nil {
+		t.Fatalf("unable to marshal: %e", err)
+	}
+
+	ed, err := json.Marshal(expected)
+	if err != nil {
+		t.Fatalf("unable to marshal: %e", err)
+	}
+
+	if !bytes.Equal(vd, ed) {
+		t.Logf("%v", string(vd))
+		t.Logf("%v", string(ed))
+		t.Errorf("results not equal")
+	}
+}
