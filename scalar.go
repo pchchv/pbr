@@ -62,3 +62,26 @@ loop:
 
 	return index, val, nil
 }
+
+func varint64(data []byte, index int) (int, uint64, error) {
+	var val uint64
+	shift := uint(0)
+loop:
+	if shift >= 64 {
+		return 0, 0, ErrIntOverflow
+	}
+
+	if len(data) <= index {
+		return 0, 0, io.ErrUnexpectedEOF
+	}
+
+	d := data[index]
+	index++
+	val |= uint64(d&0x7F) << shift
+	if d >= 0x80 {
+		shift += 7
+		goto loop
+	}
+
+	return index, val, nil
+}
