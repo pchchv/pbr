@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io"
 	"testing"
+
+	"github.com/pchchv/pbr/testmsg"
 )
 
 func TestMessage_Varint32(t *testing.T) {
@@ -120,4 +122,122 @@ func compare(t *testing.T, v, expected interface{}) {
 		t.Logf("%v", string(ed))
 		t.Errorf("results not equal")
 	}
+}
+
+func decodeScalar(t testing.TB, data []byte, skip int) *testmsg.Scalar {
+	msg := New(data)
+	s := &testmsg.Scalar{}
+	for msg.Next() {
+		if msg.FieldNumber() == skip {
+			msg.Skip()
+			continue
+		}
+
+		switch msg.FieldNumber() {
+		case 1:
+			v, err := msg.Float()
+			if err != nil {
+				t.Fatalf("unable to read float: %e", err)
+			}
+			s.Flt = v
+		case 2:
+			v, err := msg.Double()
+			if err != nil {
+				t.Fatalf("unable to read double: %e", err)
+			}
+			s.Dbl = v
+		case 3:
+			v, err := msg.Int32()
+			if err != nil {
+				t.Fatalf("unable to read int32: %e", err)
+			}
+			s.I32 = v
+		case 4:
+			v, err := msg.Int64()
+			if err != nil {
+				t.Fatalf("unable to read int64: %e", err)
+			}
+			s.I64 = v
+		case 5:
+			v, err := msg.Uint32()
+			if err != nil {
+				t.Fatalf("unable to read uint32: %e", err)
+			}
+			s.U32 = v
+		case 6:
+			v, err := msg.Uint64()
+			if err != nil {
+				t.Fatalf("unable to read uint64: %e", err)
+			}
+			s.U64 = v
+		case 7:
+			v, err := msg.Sint32()
+			if err != nil {
+				t.Fatalf("unable to read sint32: %e", err)
+			}
+			s.S32 = v
+		case 8:
+			v, err := msg.Sint64()
+			if err != nil {
+				t.Fatalf("unable to read sint64: %e", err)
+			}
+			s.S64 = v
+		case 9:
+			v, err := msg.Fixed32()
+			if err != nil {
+				t.Fatalf("unable to read fixed32: %e", err)
+			}
+			s.F32 = v
+		case 10:
+			v, err := msg.Fixed64()
+			if err != nil {
+				t.Fatalf("unable to read fixed64: %e", err)
+			}
+			s.F64 = v
+		case 11:
+			v, err := msg.Sfixed32()
+			if err != nil {
+				t.Fatalf("unable to read sfixed32: %e", err)
+			}
+			s.Sf32 = v
+		case 12:
+			v, err := msg.Sfixed64()
+			if err != nil {
+				t.Fatalf("unable to read sfixed64: %e", err)
+			}
+			s.Sf64 = v
+		case 13:
+			v, err := msg.Bool()
+			if err != nil {
+				t.Fatalf("unable to read bool: %e", err)
+			}
+			s.Bool = v
+		case 14:
+			v, err := msg.String()
+			if err != nil {
+				t.Fatalf("unable to read string: %e", err)
+			}
+			s.Str = v
+		case 15:
+			v, err := msg.Bytes()
+			if err != nil {
+				t.Fatalf("unable to read bytes: %e", err)
+			}
+			s.Byte = v
+		case 32:
+			v, err := msg.Bool()
+			if err != nil {
+				t.Fatalf("unable to read after bool: %e", err)
+			}
+			s.After = v
+		default:
+			msg.Skip()
+		}
+	}
+
+	if err := msg.Error(); err != nil {
+		t.Fatalf("scanning error: %e", err)
+	}
+
+	return s
 }
