@@ -40,6 +40,23 @@ func (b *base) Varint32() (v uint32, err error) {
 	return
 }
 
+// Int32 reads a variable-length encoding of up to 4 bytes.
+// This field type is best used if the field only has positive numbers,
+// otherwise use sint32.
+// Note, this field can also by read as an Int64.
+func (b *base) Int32() (int32, error) {
+	var v uint64
+	var err error
+	b.Index, v, err = varint64(b.Data, b.Index)
+	return int32(v), err
+}
+
+// Uint32 reads a variable-length encoding of up to 4 bytes.
+func (b *base) Uint32() (v uint32, err error) {
+	b.Index, v, err = varint32(b.Data, b.Index)
+	return v, err
+}
+
 func varint32(data []byte, index int) (int, uint32, error) {
 	var val uint32
 	shift := uint(0)
