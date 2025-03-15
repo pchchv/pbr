@@ -57,6 +57,17 @@ func (b *base) Uint32() (v uint32, err error) {
 	return v, err
 }
 
+// Sint32 uses variable-length encoding with
+// zig-zag encoding for signed values.
+// This field type more efficiently encodes
+// negative numbers than regular int32s.
+func (b *base) Sint32() (int32, error) {
+	var v uint64
+	var err error
+	b.Index, v, err = varint64(b.Data, b.Index)
+	return int32(unZig64(v)), err
+}
+
 func varint32(data []byte, index int) (int, uint32, error) {
 	var val uint32
 	shift := uint(0)
@@ -101,4 +112,8 @@ loop:
 	}
 
 	return index, val, nil
+}
+
+func unZig64(v uint64) int64 {
+	return int64((v >> 1) ^ uint64((int64(v&1)<<63)>>63))
 }
