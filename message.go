@@ -146,6 +146,18 @@ func (m *Message) Error() error {
 	return m.err
 }
 
+// FieldNumber returns the number for the current value being scanned.
+// These numbers are defined in the
+// protobuf definition file used to encode the message.
+func (m *Message) FieldNumber() int {
+	return m.fieldNumber
+}
+
+// WireType returns the 'type' of the data at the current location.
+func (m *Message) WireType() int {
+	return m.wireType
+}
+
 func (m *Message) packedLength() (l int, err error) {
 	var l64 uint64
 	m.Index, l64, err = varint64(m.Data, m.Index)
