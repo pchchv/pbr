@@ -93,6 +93,32 @@ func (b *base) Varint64() (v uint64, err error) {
 	return v, err
 }
 
+// Int64 reads a variable-length encoding of up to 8 bytes.
+// This field type is best used if the field only has positive numbers,
+// otherwise use sint64.
+func (b *base) Int64() (int64, error) {
+	var v uint64
+	var err error
+	b.Index, v, err = varint64(b.Data, b.Index)
+
+	return int64(v), err
+}
+
+// Uint64 reads a variable-length encoding of up to 8 bytes.
+func (b *base) Uint64() (v uint64, err error) {
+	b.Index, v, err = varint64(b.Data, b.Index)
+	return
+}
+
+// Sint64 uses variable-length encoding with zig-zag encoding for signed values.
+// This field type more efficiently encodes negative numbers than regular int64s.
+func (b *base) Sint64() (int64, error) {
+	var v uint64
+	var err error
+	b.Index, v, err = varint64(b.Data, b.Index)
+	return unZig64(v), err
+}
+
 func varint32(data []byte, index int) (int, uint32, error) {
 	var val uint32
 	shift := uint(0)
