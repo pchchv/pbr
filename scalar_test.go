@@ -10,6 +10,21 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var bscalar = &testmsg.Scalar{
+	Flt:  *proto.Float32(1_234_567),
+	Dbl:  *proto.Float64(1_234_567),
+	I32:  *proto.Int32(1_234_567),
+	I64:  *proto.Int64(1_234_567),
+	U32:  *proto.Uint32(1_234_567),
+	U64:  *proto.Uint64(1_234_567),
+	S32:  *proto.Int32(1_234_567),
+	S64:  *proto.Int64(1_234_567),
+	F32:  *proto.Uint32(1_234_567),
+	F64:  *proto.Uint64(1_234_567),
+	Sf32: *proto.Int32(1_234_567),
+	Sf64: *proto.Int64(1_234_567),
+}
+
 func TestMessage_Varint32(t *testing.T) {
 	t.Run("overflow", func(t *testing.T) {
 		msg := New([]byte{230, 230, 230, 230, 230, 230})
@@ -501,6 +516,36 @@ func BenchmarkBool(b *testing.B) {
 		if _, err := m.Bool(); err != nil {
 			b.Fatal(err)
 		}
+	}
+}
+
+func BenchmarkScalar_standard(b *testing.B) {
+	data, err := proto.Marshal(bscalar)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		r := &testmsg.Scalar{}
+		err = proto.Unmarshal(data, r)
+		if err != nil {
+			b.Fatalf("unable to unmarshal: %e", err)
+		}
+	}
+}
+
+func BenchmarkScalar_protoscan(b *testing.B) {
+	data, err := proto.Marshal(bscalar)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		decodeScalar(b, data, 0)
 	}
 }
 
