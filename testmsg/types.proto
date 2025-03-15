@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package testmsg;
+
+option go_package = ".;testmsg";
+
+message Scalar {
+  float flt = 1;
+  double dbl = 2;
+  int32 i32 = 3;
+  int64 i64 = 4;
+  uint32 u32 = 5;
+  uint64 u64 = 6;
+  sint32 s32 = 7;
+  sint64 s64 = 8;
+  fixed32 f32 = 9;
+  fixed64 f64 = 10;
+  sfixed32 sf32 = 11;
+  sfixed64 sf64 = 12;
+  bool bool = 13;
+  string str = 14;
+  bytes byte = 15;
+
+  bool after = 32;
+}
+
+message Repeated {
+  repeated float flt = 1;
+  repeated double dbl = 2;
+  repeated int32 i32 = 3;
+  repeated int64 i64 = 4;
+  repeated uint32 u32 = 5;
+  repeated uint64 u64 = 6;
+  repeated sint32 s32 = 7;
+  repeated sint64 s64 = 8;
+  repeated fixed32 f32 = 9;
+  repeated fixed64 f64 = 10;
+  repeated sfixed32 sf32 = 11;
+  repeated sfixed64 sf64 = 12;
+  repeated bool bool = 13;
+  repeated string str = 14;
+  repeated bytes byte = 15;
+
+  bool after = 32;
+}
+
+message Packed {
+  repeated float flt = 1 [packed = true];
+  repeated double dbl = 2 [packed = true];
+  repeated int32 i32 = 3 [packed = true];
+  repeated int64 i64 = 4 [packed = true];
+  repeated uint32 u32 = 5 [packed = true];
+  repeated uint64 u64 = 6 [packed = true];
+  repeated sint32 s32 = 7 [packed = true];
+  repeated sint64 s64 = 8 [packed = true];
+  repeated fixed32 f32 = 9 [packed = true];
+  repeated fixed64 f64 = 10 [packed = true];
+  repeated sfixed32 sf32 = 11 [packed = true];
+  repeated sfixed64 sf64 = 12 [packed = true];
+  repeated bool bool = 13 [packed = true];
+  repeated string str = 14;
+  repeated bytes byte = 15;
+
+  bool after = 32;
+}
+
+message Parent {
+  Child child = 1;
+
+  bool after = 32;
+}
+
+message Child {
+  int64 number = 100;
+  repeated Grandchild grandchild = 200;
+  repeated int64 numbers = 300;
+
+  bool after = 3200;
+}
+
+message Grandchild {
+  int64 number = 1000;
+  repeated int64 numbers = 2000 [packed = true];
+
+  bool after = 32000;
+}
+
+message Customer {
+  int64 id = 1;
+  string username = 2;
+
+  repeated Order orders = 3;
+  repeated int64 favorite_ids = 4 [packed = true];
+}
+
+message Order {
+  int64 id = 1;
+  bool open = 2;
+  repeated Item items = 3;
+}
+
+message Item {
+  int64 id = 1;
+  // a big object
+}
