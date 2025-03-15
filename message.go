@@ -62,6 +62,43 @@ func (m *Message) Next() bool {
 	return false
 }
 
+// Message will return a pointer to an embedded message that can then
+// be scanned in kind of a recursive fashion. Will reuse the provided
+// Message object if provided.
+func (m *Message) Message(msg *Message) (*Message, error) {
+	l, err := m.packedLength()
+	if err != nil {
+		return nil, err
+	}
+
+	if msg == nil {
+		msg = New(m.Data[m.Index : m.Index+l])
+	} else {
+		msg.Reset(m.Data[m.Index : m.Index+l])
+	}
+
+	m.Index += l
+	return msg, nil
+}
+
+// MessageData returns the encoded data a message. This data can
+// then be decoded using conventional tools.
+func (m *Message) MessageData() ([]byte, error) {
+	l, err := m.packedLength()
+	if err != nil {
+		return nil, err
+	}
+
+	postIndex := m.Index + l
+	if len(m.Data) < postIndex {
+		return nil, io.ErrUnexpectedEOF
+	}
+
+	d := m.Data[m.Index:postIndex]
+	m.Index = postIndex
+	return d, nil
+}
+
 func (m *Message) packedLength() (l int, err error) {
 	var l64 uint64
 	m.Index, l64, err = varint64(m.Data, m.Index)
