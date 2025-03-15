@@ -456,6 +456,71 @@ func TestDecodeScalar_skip(t *testing.T) {
 	}
 }
 
+func TestDecodeScalar_boolAsInt64(t *testing.T) {
+	// true value, 1 encoded with some unnecessary leading zeros.
+	msg := New([]byte{0x08, 0x81, 0x00})
+	for msg.Next() {
+		if n := msg.FieldNumber(); n != 1 {
+			t.Errorf("incorrect field number: %d != 1", n)
+		}
+
+		if v, err := msg.Bool(); err != nil {
+			t.Errorf("unexpected error: %e", err)
+		} else if !v {
+			t.Errorf("incorrect value: %v != true", v)
+		}
+	}
+
+	// is a number other than 1, so should be false
+	msg = New([]byte{0x08, 0x81, 0x0F})
+	for msg.Next() {
+		if n := msg.FieldNumber(); n != 1 {
+			t.Errorf("incorrect field number: %d != 1", n)
+		}
+
+		if v, err := msg.Bool(); err != nil {
+			t.Errorf("unexpected error: %e", err)
+		} else if v {
+			t.Errorf("incorrect value: %v != true", v)
+		}
+	}
+}
+
+func TestMessage_Int32(t *testing.T) {
+	// tests reading an int32 field as an int64
+	message := &testmsg.Scalar{
+		I32: *proto.Int32(1_234_567),
+	}
+
+	data, err := proto.Marshal(message)
+	if err != nil {
+		t.Fatalf("unable to marshal: %e", err)
+	}
+
+	r := &testmsg.Scalar{}
+	if err = proto.Unmarshal(data, r); err != nil {
+		t.Fatalf("unable to unmarshal: %e", err)
+	}
+
+	var val int64
+	msg := New(data)
+	for msg.Next() {
+		if msg.FieldNumber() == 3 {
+			if v, err := msg.Int64(); err != nil {
+				t.Fatalf("unable to read: %e", err)
+			} else {
+				val = v
+			}
+		} else {
+			msg.Skip()
+		}
+	}
+
+	if val != 1_234_567 {
+		t.Errorf("incorrect value: %d != %d", val, 1_234_567)
+	}
+}
+
 func BenchmarkVarint32(b *testing.B) {
 	m := New([]byte{200, 199, 198, 6, 0, 0, 0, 0})
 	v, err := m.Varint32()
