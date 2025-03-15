@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/pchchv/pbr/testmsg"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestMessage_Varint32(t *testing.T) {
@@ -39,6 +40,405 @@ func TestMessage_Varint64(t *testing.T) {
 			t.Errorf("wrong error: %e", err)
 		}
 	})
+}
+
+func TestDecodeScalar_numbers(t *testing.T) {
+	cases := []struct {
+		name    string
+		message *testmsg.Scalar
+	}{
+		{
+			name:    "positive float",
+			message: &testmsg.Scalar{Flt: *proto.Float32(123.4567)},
+		},
+		{
+			name:    "negative float",
+			message: &testmsg.Scalar{Flt: *proto.Float32(-23.4567)},
+		},
+		{
+			name:    "zero float",
+			message: &testmsg.Scalar{Flt: *proto.Float32(0)},
+		},
+		{
+			name:    "positive double",
+			message: &testmsg.Scalar{Dbl: *proto.Float64(123.4567)},
+		},
+		{
+			name:    "negative double",
+			message: &testmsg.Scalar{Dbl: *proto.Float64(-23.4567)},
+		},
+		{
+			name:    "zero double",
+			message: &testmsg.Scalar{Dbl: *proto.Float64(0)},
+		},
+		{
+			name:    "float and double",
+			message: &testmsg.Scalar{Dbl: *proto.Float64(123.4567), Flt: *proto.Float32(34)},
+		},
+
+		{
+			name:    "positive int32",
+			message: &testmsg.Scalar{I32: *proto.Int32(5280)},
+		},
+		{
+			name:    "negative int32",
+			message: &testmsg.Scalar{I32: *proto.Int32(-123_567_890)},
+		},
+		{
+			name:    "zero int32",
+			message: &testmsg.Scalar{I32: *proto.Int32(0)},
+		},
+		{
+			name:    "positive int64",
+			message: &testmsg.Scalar{I64: *proto.Int64(5280)},
+		},
+		{
+			name:    "big int64",
+			message: &testmsg.Scalar{I64: *proto.Int64(9_828_385_280)},
+		},
+		{
+			name:    "negative int64",
+			message: &testmsg.Scalar{I64: *proto.Int64(-111_123_567_890)},
+		},
+		{
+			name:    "zero int64",
+			message: &testmsg.Scalar{I64: *proto.Int64(0)},
+		},
+
+		{
+			name:    "positive uint32",
+			message: &testmsg.Scalar{U32: *proto.Uint32(5280)},
+		},
+		{
+			name:    "zero uint32",
+			message: &testmsg.Scalar{U32: *proto.Uint32(0)},
+		},
+		{
+			name:    "positive uint64",
+			message: &testmsg.Scalar{U64: *proto.Uint64(5280)},
+		},
+		{
+			name:    "big uint64",
+			message: &testmsg.Scalar{U64: *proto.Uint64(9_828_385_280)},
+		},
+		{
+			name:    "zero uint64",
+			message: &testmsg.Scalar{U64: *proto.Uint64(0)},
+		},
+
+		{
+			name:    "positive sint32",
+			message: &testmsg.Scalar{S32: *proto.Int32(5280)},
+		},
+		{
+			name:    "negative sint32",
+			message: &testmsg.Scalar{S32: *proto.Int32(-123_567_890)},
+		},
+		{
+			name:    "zero sint32",
+			message: &testmsg.Scalar{S32: *proto.Int32(0)},
+		},
+		{
+			name:    "positive sint64",
+			message: &testmsg.Scalar{S64: *proto.Int64(5280)},
+		},
+		{
+			name:    "big sint64",
+			message: &testmsg.Scalar{S64: *proto.Int64(9_828_385_280)},
+		},
+		{
+			name:    "negative sint64",
+			message: &testmsg.Scalar{S64: *proto.Int64(-111_123_567_890)},
+		},
+		{
+			name:    "zero sint64",
+			message: &testmsg.Scalar{S64: *proto.Int64(0)},
+		},
+
+		{
+			name:    "positive fixed32",
+			message: &testmsg.Scalar{F32: *proto.Uint32(5280)},
+		},
+		{
+			name:    "zero fixed32",
+			message: &testmsg.Scalar{F32: *proto.Uint32(0)},
+		},
+		{
+			name:    "positive fixed64",
+			message: &testmsg.Scalar{F64: *proto.Uint64(5280)},
+		},
+		{
+			name:    "big fixed64",
+			message: &testmsg.Scalar{F64: *proto.Uint64(9_828_385_280)},
+		},
+		{
+			name:    "zero fixed64",
+			message: &testmsg.Scalar{F64: *proto.Uint64(0)},
+		},
+
+		{
+			name:    "positive sfixed32",
+			message: &testmsg.Scalar{Sf32: *proto.Int32(5280)},
+		},
+		{
+			name:    "negative sfixed32",
+			message: &testmsg.Scalar{Sf32: *proto.Int32(-5280)},
+		},
+		{
+			name:    "zero sfixed32",
+			message: &testmsg.Scalar{Sf32: *proto.Int32(0)},
+		},
+		{
+			name:    "positive sfixed64",
+			message: &testmsg.Scalar{Sf64: *proto.Int64(5280)},
+		},
+		{
+			name:    "negative sfixed64",
+			message: &testmsg.Scalar{Sf64: *proto.Int64(-1_234_567)},
+		},
+		{
+			name:    "big sfixed64",
+			message: &testmsg.Scalar{Sf64: *proto.Int64(9_828_385_280)},
+		},
+		{
+			name:    "zero sfixed64",
+			message: &testmsg.Scalar{Sf64: *proto.Int64(0)},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := proto.Marshal(tc.message)
+			if err != nil {
+				t.Fatalf("unable to marshal: %e", err)
+			}
+
+			v := decodeScalar(t, data, 0)
+			compare(t, v, tc.message)
+		})
+	}
+}
+
+func TestDecodeScalar_bool(t *testing.T) {
+	cases := []struct {
+		name    string
+		message *testmsg.Scalar
+	}{
+		{
+			name:    "true",
+			message: &testmsg.Scalar{Bool: *proto.Bool(true)},
+		},
+		{
+			name:    "false",
+			message: &testmsg.Scalar{Bool: *proto.Bool(false)},
+		},
+		{
+			name:    "none",
+			message: &testmsg.Scalar{Bool: false},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := proto.Marshal(tc.message)
+			if err != nil {
+				t.Fatalf("unable to marshal: %e", err)
+			}
+
+			r := &testmsg.Scalar{}
+			err = proto.Unmarshal(data, r)
+			if err != nil {
+				t.Fatalf("unable to unmarshal: %e", err)
+			}
+
+			v := decodeScalar(t, data, 0)
+			compare(t, v, tc.message)
+		})
+	}
+}
+
+func TestDecodeScalar_string(t *testing.T) {
+	cases := []struct {
+		name    string
+		message *testmsg.Scalar
+	}{
+		{
+			name:    "empty",
+			message: &testmsg.Scalar{Str: *proto.String("")},
+		},
+		{
+			name:    "present",
+			message: &testmsg.Scalar{Str: *proto.String("message")},
+		},
+		{
+			name:    "emoji",
+			message: &testmsg.Scalar{Str: *proto.String("123 😃 456")},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := proto.Marshal(tc.message)
+			if err != nil {
+				t.Fatalf("unable to marshal: %e", err)
+			}
+
+			r := &testmsg.Scalar{}
+			err = proto.Unmarshal(data, r)
+			if err != nil {
+				t.Fatalf("unable to unmarshal: %e", err)
+			}
+
+			v := decodeScalar(t, data, 0)
+			compare(t, v, tc.message)
+		})
+	}
+}
+
+func TestDecodeScalar_bytes(t *testing.T) {
+	cases := []struct {
+		name    string
+		message *testmsg.Scalar
+	}{
+		{
+			name:    "empty",
+			message: &testmsg.Scalar{Byte: []byte{}},
+		},
+		{
+			name:    "empty",
+			message: &testmsg.Scalar{Byte: []byte{1, 2, 3, 4, 5, 6, 7, 8, 9}},
+		},
+		{
+			name:    "long",
+			message: &testmsg.Scalar{Byte: make([]byte, 10000)},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := proto.Marshal(tc.message)
+			if err != nil {
+				t.Fatalf("unable to marshal: %e", err)
+			}
+
+			r := &testmsg.Scalar{}
+			err = proto.Unmarshal(data, r)
+			if err != nil {
+				t.Fatalf("unable to unmarshal: %e", err)
+			}
+
+			v := decodeScalar(t, data, 0)
+			compare(t, v, tc.message)
+		})
+	}
+}
+
+func TestDecodeScalar_skip(t *testing.T) {
+	cases := []struct {
+		name    string
+		skip    int
+		message *testmsg.Scalar
+	}{
+		{
+			name:    "skip float",
+			skip:    1,
+			message: &testmsg.Scalar{Flt: *proto.Float32(1.5), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip double",
+			skip:    2,
+			message: &testmsg.Scalar{Dbl: *proto.Float64(1.5), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip int32",
+			skip:    3,
+			message: &testmsg.Scalar{I32: *proto.Int32(1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip int64",
+			skip:    4,
+			message: &testmsg.Scalar{I64: *proto.Int64(-1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip uint32",
+			skip:    5,
+			message: &testmsg.Scalar{U32: *proto.Uint32(1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip uint64",
+			skip:    6,
+			message: &testmsg.Scalar{U64: *proto.Uint64(1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip sint32",
+			skip:    7,
+			message: &testmsg.Scalar{S32: *proto.Int32(1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip sint64",
+			skip:    8,
+			message: &testmsg.Scalar{S64: *proto.Int64(-1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip fixed32",
+			skip:    9,
+			message: &testmsg.Scalar{F32: *proto.Uint32(1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip fixed64",
+			skip:    10,
+			message: &testmsg.Scalar{F64: *proto.Uint64(1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip sfixed32",
+			skip:    11,
+			message: &testmsg.Scalar{Sf32: *proto.Int32(1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip sfixed64",
+			skip:    12,
+			message: &testmsg.Scalar{Sf64: *proto.Int64(-1_234_567), After: *proto.Bool(true)},
+		},
+		{
+			name:    "skip bool",
+			skip:    13,
+			message: &testmsg.Scalar{Bool: *proto.Bool(false), After: *proto.Bool(true)},
+		},
+		{
+			name: "skip string",
+			skip: 14,
+			message: &testmsg.Scalar{
+				Str:   *proto.String("abcdefghij qwerty"),
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "skip bytes",
+			skip: 15,
+			message: &testmsg.Scalar{
+				Byte:  make([]byte, 10000),
+				After: *proto.Bool(true),
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := proto.Marshal(tc.message)
+			if err != nil {
+				t.Fatalf("unable to marshal: %e", err)
+			}
+
+			r := &testmsg.Scalar{}
+			err = proto.Unmarshal(data, r)
+			if err != nil {
+				t.Fatalf("unable to unmarshal: %e", err)
+			}
+
+			v := decodeScalar(t, data, tc.skip)
+			compare(t, v, &testmsg.Scalar{After: *proto.Bool(true)})
+		})
+	}
 }
 
 func BenchmarkVarint32(b *testing.B) {
