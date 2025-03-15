@@ -33,6 +33,13 @@ func (b *base) Sfixed32() (int32, error) {
 	return int32(v), err
 }
 
+// Varint32 reads up to 32-bits of variable-length encoded data.
+// Note that negative int32 values could still be encoded as 64-bit varints due to their leading 1s.
+func (b *base) Varint32() (v uint32, err error) {
+	b.Index, v, err = varint32(b.Data, b.Index)
+	return
+}
+
 func varint32(data []byte, index int) (int, uint32, error) {
 	var val uint32
 	shift := uint(0)
