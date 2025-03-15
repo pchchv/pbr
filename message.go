@@ -5,6 +5,16 @@ import (
 	"io"
 )
 
+const (
+	// WireType describes the encoding method for the next value in the stream.
+	WireTypeVarint          = 0
+	WireType64bit           = 1
+	WireTypeLengthDelimited = 2
+	WireTypeStartGroup      = 3 // deprecated by protobuf, not supported
+	WireTypeEndGroup        = 4 // deprecated by protobuf, not supported
+	WireType32bit           = 5
+)
+
 var (
 	// ErrIntOverflow is returned when scanning a varint-encoded integer,
 	// the value is found to be too long for the integer type.
@@ -97,6 +107,43 @@ func (m *Message) MessageData() ([]byte, error) {
 	d := m.Data[m.Index:postIndex]
 	m.Index = postIndex
 	return d, nil
+}
+
+// Skip will move the scanner past the
+// current value if it is not needed.
+// If a value is not parsed this method must be
+// called to move the decoder past the value.
+func (m *Message) Skip() {
+	switch m.wireType {
+	case WireTypeVarint:
+		_, m.err = m.Varint64()
+	case WireType64bit:
+		if len(m.Data) <= m.Index+8 {
+			m.err = io.ErrUnexpectedEOF
+			return
+		}
+		m.Index += 8
+	case WireTypeLengthDelimited:
+		l, err := m.packedLength()
+		if err != nil {
+			m.err = err
+			return
+		}
+		m.Index += l
+	case WireType32bit:
+		if len(m.Data) <= m.Index+4 {
+			m.err = io.ErrUnexpectedEOF
+			return
+		}
+		m.Index += 4
+	}
+}
+
+// Error will return any errors that were encountered during scanning.
+// Errors could be due to reading the
+// incorrect types or forgetting to skip and unused value.
+func (m *Message) Error() error {
+	return m.err
 }
 
 func (m *Message) packedLength() (l int, err error) {
