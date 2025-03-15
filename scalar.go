@@ -150,6 +150,24 @@ func (b *base) Float() (float32, error) {
 	return math.Float32frombits(v), err
 }
 
+// String reads a string type.
+// This data will always contain UTF-8 encoded or 7-bit ASCII text.
+func (m *Message) String() (string, error) {
+	b, err := m.Bytes()
+	return string(b), err
+}
+
+// Bytes returns the encode sequence of bytes.
+func (m *Message) Bytes() ([]byte, error) {
+	if l, err := m.packedLength(); err != nil {
+		return nil, err
+	} else {
+		b := m.Data[m.Index : m.Index+l]
+		m.Index += l
+		return b, nil
+	}
+}
+
 func varint32(data []byte, index int) (int, uint32, error) {
 	var val uint32
 	shift := uint(0)
