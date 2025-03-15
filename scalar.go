@@ -3,6 +3,7 @@ package pbr
 import (
 	"encoding/binary"
 	"io"
+	"math"
 )
 
 // base contains all methods for
@@ -117,6 +118,36 @@ func (b *base) Sint64() (int64, error) {
 	var err error
 	b.Index, v, err = varint64(b.Data, b.Index)
 	return unZig64(v), err
+}
+
+// Bool is encoded as 0x01 or 0x00 plus the field+type prefix byte.
+// 2 bytes total.
+func (b *base) Bool() (bool, error) {
+	if len(b.Data) <= b.Index {
+		return false, io.ErrUnexpectedEOF
+	}
+
+	if d := b.Data[b.Index]; d&0x80 == 0 {
+		b.Index++
+		return d == 1, nil
+	}
+
+	var v uint64
+	var err error
+	b.Index, v, err = varint64(b.Data, b.Index)
+	return v == 1, err
+}
+
+// Double values are encoded as a fixed length of 8 bytes in their IEEE-754 format.
+func (b *base) Double() (float64, error) {
+	v, err := b.Fixed64()
+	return math.Float64frombits(v), err
+}
+
+// Float values are encoded as a fixed length of 4 bytes in their IEEE-754 format.
+func (b *base) Float() (float32, error) {
+	v, err := b.Fixed32()
+	return math.Float32frombits(v), err
 }
 
 func varint32(data []byte, index int) (int, uint32, error) {
