@@ -32,3 +32,26 @@ func (b *base) Sfixed32() (int32, error) {
 	v, err := b.Fixed32()
 	return int32(v), err
 }
+
+func varint32(data []byte, index int) (int, uint32, error) {
+	var val uint32
+	shift := uint(0)
+loop:
+	if shift >= 32 {
+		return index, 0, ErrIntOverflow
+	}
+
+	if len(data) <= index {
+		return index, 0, io.ErrUnexpectedEOF
+	}
+
+	d := data[index]
+	index++
+	val |= uint32(d&0x7F) << shift
+	if d >= 0x80 {
+		shift += 7
+		goto loop
+	}
+
+	return index, val, nil
+}
