@@ -144,6 +144,208 @@ func TestIterator_Skip(t *testing.T) {
 	}
 }
 
+func TestIterator_FieldNumber(t *testing.T) {
+	message := &testmsg.Packed{
+		I64: make([]int64, 4000),
+	}
+	data, err := proto.Marshal(message)
+	if err != nil {
+		t.Fatalf("unable to marshal: %e", err)
+	}
+
+	msg := New(data)
+	if !msg.Next() {
+		t.Fatalf("next is false?")
+	}
+
+	iter, err := msg.Iterator(nil)
+	if err != nil {
+		t.Fatalf("error getting iterator: %e", err)
+	}
+
+	if v := iter.FieldNumber(); v != 4 {
+		t.Errorf("incorrect field number: %v", v)
+	}
+}
+
+func TestInterator(t *testing.T) {
+	cases := []struct {
+		name    string
+		skip    int
+		message *testmsg.Packed
+	}{
+		{
+			name: "float",
+			skip: 1,
+			message: &testmsg.Packed{
+				Flt:   []float32{1, 1.5, 2, 2.5, -3, -3.5},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "int32",
+			skip: 3,
+			message: &testmsg.Packed{
+				I32:   []int32{1, -2, 3, -4, 5, 6, 2000, -3000, 4000, -5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "int64",
+			skip: 4,
+			message: &testmsg.Packed{
+				I64:   []int64{1, -2, 3, -4, 5, 6, 2000, -3000, 4000, -5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "uint32",
+			skip: 5,
+			message: &testmsg.Packed{
+				U32:   []uint32{1, 2, 3, 4, 5, 6, 2000, 3000, 4000, 5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "uint64",
+			skip: 6,
+			message: &testmsg.Packed{
+				U64:   []uint64{1, 2, 3, 4, 5, 6, 2000, 3000, 4000, 5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "sint32",
+			skip: 7,
+			message: &testmsg.Packed{
+				S32:   []int32{1, -2, 3, -4, 5, 6, 2000, -3000, 4000, -5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "sint64",
+			skip: 8,
+			message: &testmsg.Packed{
+				S64:   []int64{1, -2, 3, -4, 5, 6, 2000, -3000, 4000, -5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "fixed32",
+			skip: 9,
+			message: &testmsg.Packed{
+				F32:   []uint32{1, 2, 3, 4, 5, 6, 2000, 3000, 4000, 5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "fixed64",
+			skip: 10,
+			message: &testmsg.Packed{
+				F64:   []uint64{1, 2, 3, 4, 5, 6, 2000, 3000, 4000, 5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "sfixed32",
+			skip: 11,
+			message: &testmsg.Packed{
+				Sf32:  []int32{1, -2, 3, -4, 5, 6, 2000, -3000, 4000, -5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "sfixed64",
+			skip: 12,
+			message: &testmsg.Packed{
+				Sf64:  []int64{1, -2, 3, -4, 5, 6, 2000, -3000, 4000, -5000},
+				After: *proto.Bool(true),
+			},
+		},
+		{
+			name: "bools",
+			skip: 13,
+			message: &testmsg.Packed{
+				Bool:  []bool{true, true, false, false, true, false},
+				After: *proto.Bool(true),
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := proto.Marshal(tc.message)
+			if err != nil {
+				t.Fatalf("unable to marshal: %e", err)
+			}
+
+			v := decodeIterator(t, data, 0)
+			compare(t, v, tc.message)
+		})
+
+		t.Run("skip "+tc.name, func(t *testing.T) {
+			data, err := proto.Marshal(tc.message)
+			if err != nil {
+				t.Fatalf("unable to marshal: %e", err)
+			}
+
+			v := decodeIterator(t, data, tc.skip)
+			compare(t, v, &testmsg.Scalar{After: *proto.Bool(true)})
+		})
+
+		t.Run("counts "+tc.name, func(t *testing.T) {
+			data, err := proto.Marshal(tc.message)
+			if err != nil {
+				t.Fatalf("unable to marshal: %e", err)
+			}
+
+			v := decodeIterator(t, data, 0)
+			if len(v.Flt) != cap(v.Flt) {
+				t.Errorf("incorrect counts: %v != %v", len(v.Flt), cap(v.Flt))
+			}
+			if len(v.Dbl) != cap(v.Dbl) {
+				t.Errorf("incorrect counts: %v != %v", len(v.Dbl), cap(v.Dbl))
+			}
+			if len(v.I32) != cap(v.I32) {
+				t.Errorf("incorrect counts: %v != %v", len(v.I32), cap(v.I32))
+			}
+			if len(v.I64) != cap(v.I64) {
+				t.Errorf("incorrect counts: %v != %v", len(v.I64), cap(v.I64))
+			}
+			if len(v.U32) != cap(v.U32) {
+				t.Errorf("incorrect counts: %v != %v", len(v.U32), cap(v.U32))
+			}
+			if len(v.U64) != cap(v.U64) {
+				t.Errorf("incorrect counts: %v != %v", len(v.U64), cap(v.U64))
+			}
+			if len(v.S32) != cap(v.S32) {
+				t.Errorf("incorrect counts: %v != %v", len(v.S32), cap(v.S32))
+			}
+			if len(v.F32) != cap(v.F32) {
+				t.Errorf("incorrect counts: %v != %v", len(v.F32), cap(v.F32))
+			}
+			if len(v.F64) != cap(v.F64) {
+				t.Errorf("incorrect counts: %v != %v", len(v.F64), cap(v.F64))
+			}
+			if len(v.Sf32) != cap(v.Sf32) {
+				t.Errorf("incorrect counts: %v != %v", len(v.Sf32), cap(v.Sf32))
+			}
+			if len(v.Sf64) != cap(v.Sf64) {
+				t.Errorf("incorrect counts: %v != %v", len(v.Sf64), cap(v.Sf64))
+			}
+			if len(v.Bool) != cap(v.Bool) {
+				t.Errorf("incorrect counts: %v != %v", len(v.Bool), cap(v.Bool))
+			}
+			if len(v.Str) != cap(v.Str) {
+				t.Errorf("incorrect counts: %v != %v", len(v.Str), cap(v.Str))
+			}
+			if len(v.Byte) != cap(v.Byte) {
+				t.Errorf("incorrect counts: %v != %v", len(v.Byte), cap(v.Byte))
+			}
+		})
+	}
+}
+
 func decodeIterator(t *testing.T, data []byte, skip int) *testmsg.Packed {
 	msg := New(data)
 	p := &testmsg.Packed{}
