@@ -181,3 +181,13 @@ func (m *Message) packedLength() (l int, err error) {
 
 	return
 }
+
+func (m *Message) count(l int) (count int) {
+	for _, b := range m.Data[m.Index : m.Index+l] {
+		if b < 128 {
+			count++
+		}
+	}
+
+	return
+}
