@@ -76,3 +76,19 @@ func (i *Iterator) Skip(wireType int, count int) {
 		panic("invalid wire type for a packed repeated field")
 	}
 }
+
+// HasNext is used in a 'for' loop to read through all the elements.
+// Returns false when all the items have been read.
+// This method does NOT need to be called,
+// reading a value automatically moves in the index forward.
+// This behavior is different than Message.Next().
+func (i *Iterator) HasNext() bool {
+	return i.base.Index < len(i.base.Data)
+}
+
+// FieldNumber returns the number for the current repeated field.
+// These numbers are defined in the
+// protobuf definition file used to encode the message.
+func (i *Iterator) FieldNumber() int {
+	return i.fieldNumber
+}
