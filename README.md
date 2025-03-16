@@ -1,3 +1,4 @@
-# pbr [![Godoc Reference](https://pkg.go.dev/badge/github.com/pchchv/pbr)](https://pkg.go.dev/github.com/pchchv/pbr)
+# pbr [![CI](https://github.com/pchchv/pbr/workflows/CI/badge.svg)](https://github.com/pchchv/pbr/actions?query=workflow%3ACI+event%3Apush) [![codecov](https://codecov.io/gh/pchchv/pbr/branch/master/graph/badge.svg?token=NuuTjLVpKW)](https://codecov.io/gh/pchchv/pbr) [![Go Report Card](http://goreportcard.com/badge/github.com/pchchv/pbr)](https://goreportcard.com/report/github.com/pchchv/pbr) [![Godoc Reference](https://pkg.go.dev/badge/github.com/pchchv/pbr)](https://pkg.go.dev/github.com/pchchv/pbr)
 
-Low-level *p*roto*b*uf data *r*eader.
+Package `pbr` is a low-level reader for [protocol buffers](https://developers.google.com/protocol-buffers) encoded data in Golang.  
+Main feature is the support for lazy/conditional decoding of fields.
