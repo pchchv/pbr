@@ -555,3 +555,158 @@ func decodeIterator(t *testing.T, data []byte, skip int) *testmsg.Packed {
 
 	return p
 }
+
+func BenchmarkIterateInt64(b *testing.B) {
+	items := []int64{}
+	for i := 0; i < 100; i++ {
+		items = append(items, int64(50*i))
+	}
+
+	data, err := proto.Marshal(&testmsg.Packed{I64: items})
+	if err != nil {
+		b.Fatalf("unable to marshal: %e", err)
+	}
+
+	msg := New(data)
+	iter := &Iterator{}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		msg.Index = 0
+		for msg.Next() {
+			switch msg.FieldNumber() {
+			case 4:
+				var err error
+				iter, err := msg.Iterator(iter)
+				if err != nil {
+					b.Fatalf("unable to create iterator: %e", err)
+				}
+
+				c := iter.Count(WireTypeVarint)
+				if c != 100 {
+					b.Errorf("incorrect count, got %v", c)
+				}
+
+				data := make([]int64, 0, iter.Count(WireTypeVarint))
+				for iter.HasNext() {
+					v, err := iter.Int64()
+					if err != nil {
+						b.Fatalf("unable to read: %e", err)
+					}
+					data = append(data, v)
+				}
+
+				if len(data) != 100 {
+					b.Error("incorrect data")
+				}
+			default:
+				msg.Skip()
+			}
+		}
+	}
+}
+
+func BenchmarkIterateSkip_single(b *testing.B) {
+	items := []int64{}
+	for i := 0; i < 100; i++ {
+		items = append(items, int64(50*i))
+	}
+
+	data, err := proto.Marshal(&testmsg.Packed{I64: items})
+	if err != nil {
+		b.Fatalf("unable to marshal: %e", err)
+	}
+
+	msg := New(data)
+	iter := &Iterator{}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		msg.Index = 0
+		for msg.Next() {
+			switch msg.FieldNumber() {
+			case 4:
+				var err error
+				iter, err := msg.Iterator(iter)
+				if err != nil {
+					b.Fatalf("unable to create iterator: %e", err)
+				}
+
+				// to match InterateInt64 benchmark
+				_ = make([]int64, 0, iter.Count(WireTypeVarint))
+				for iter.HasNext() {
+					iter.Skip(WireTypeVarint, 1)
+				}
+			default:
+				msg.Skip()
+			}
+		}
+	}
+}
+
+func BenchmarkIterateSkip_all(b *testing.B) {
+	items := []int64{}
+	for i := 0; i < 100; i++ {
+		items = append(items, int64(50*i))
+	}
+
+	data, err := proto.Marshal(&testmsg.Packed{I64: items})
+	if err != nil {
+		b.Fatalf("unable to marshal: %e", err)
+	}
+
+	msg := New(data)
+	iter := &Iterator{}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		msg.Index = 0
+		for msg.Next() {
+			switch msg.FieldNumber() {
+			case 4:
+				var err error
+				iter, err := msg.Iterator(iter)
+				if err != nil {
+					b.Fatalf("unable to create iterator: %e", err)
+				}
+
+				// to match IterateInt64 benchmark
+				c := iter.Count(WireTypeVarint)
+				_ = make([]int64, 0, c)
+				iter.Skip(WireTypeVarint, c)
+			default:
+				msg.Skip()
+			}
+		}
+	}
+}
+
+func BenchmarkRepeatedInt64(b *testing.B) {
+	items := []int64{}
+	for i := 0; i < 100; i++ {
+		items = append(items, 50*int64(i))
+	}
+
+	data, err := proto.Marshal(&testmsg.Packed{I64: items})
+	if err != nil {
+		b.Fatalf("unable to marshal: %e", err)
+	}
+
+	msg := New(data)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		msg.Index = 0
+		for msg.Next() {
+			switch msg.FieldNumber() {
+			case 4:
+				_, err := msg.RepeatedInt64(nil)
+				if err != nil {
+					b.Fatalf("unable to read: %e", err)
+				}
+			default:
+				msg.Skip()
+			}
+		}
+	}
+}
