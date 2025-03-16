@@ -1,6 +1,8 @@
 package pbr_test
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 
 	"github.com/pchchv/pbr"
@@ -51,6 +53,27 @@ func Example_readIntoArray() {
 		end := msg.Index
 
 		f.Data = msg.Data[start:end]
+
+		if f.Number == 300 && f.WireType == 2 {
+			if f.Number == 300 && len(f.Data) == 1 && f.Data[0] == 35 {
+				continue
+			}
+
+			rawData := f.Data
+			buf := bytes.NewReader(rawData)
+			for buf.Len() > 0 {
+				val, err := binary.ReadVarint(buf)
+				if err != nil {
+					panic(err)
+				}
+
+				encoded := make([]byte, binary.MaxVarintLen64)
+				n := binary.PutVarint(encoded, val)
+				fields = append(fields, Field{Number: 300, WireType: 0, Data: encoded[:n]})
+			}
+			continue
+		}
+
 		fields = append(fields, f)
 	}
 
@@ -62,6 +85,7 @@ func Example_readIntoArray() {
 	// {Number:100 WireType:0 Data:[123]}
 	// {Number:200 WireType:2 Data:[50 192 62 111 130 125 44 255 255 255 255 255 255 255 255 255 1 2 253 255 255 255 255 255 255 255 255 1 4 251 255 255 255 255 255 255 255 255 1 6 249 255 255 255 255 255 255 255 255 1 8]}
 	// {Number:200 WireType:2 Data:[59 192 62 162 254 255 255 255 255 255 255 255 1 130 125 44 1 254 255 255 255 255 255 255 255 255 1 3 252 255 255 255 255 255 255 255 255 1 5 250 255 255 255 255 255 255 255 255 1 7 248 255 255 255 255 255 255 255 255 1]}
+	// {Number:300 WireType:0 Data:[35]}
 	// {Number:300 WireType:0 Data:[1]}
 	// {Number:300 WireType:0 Data:[2]}
 	// {Number:300 WireType:0 Data:[3]}
