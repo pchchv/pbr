@@ -143,3 +143,213 @@ func TestIterator_Skip(t *testing.T) {
 		t.Fatalf("read error: %e", err)
 	}
 }
+
+func decodeIterator(t *testing.T, data []byte, skip int) *testmsg.Packed {
+	msg := New(data)
+	p := &testmsg.Packed{}
+	for msg.Next() {
+		if msg.FieldNumber() == skip {
+			msg.Skip()
+			continue
+		}
+
+		switch msg.FieldNumber() {
+		case 1:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.Flt = make([]float32, 0, iter.Count(WireType32bit))
+			for iter.HasNext() {
+				v, err := iter.Float()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.Flt = append(p.Flt, v)
+			}
+		case 2:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.Dbl = make([]float64, 0, iter.Count(WireType64bit))
+			for iter.HasNext() {
+				v, err := iter.Double()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.Dbl = append(p.Dbl, v)
+			}
+		case 3:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.I32 = make([]int32, 0, iter.Count(WireTypeVarint))
+			for iter.HasNext() {
+				v, err := iter.Int32()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.I32 = append(p.I32, v)
+			}
+		case 4:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.I64 = make([]int64, 0, iter.Count(WireTypeVarint))
+			for iter.HasNext() {
+				v, err := iter.Int64()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.I64 = append(p.I64, v)
+			}
+		case 5:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.U32 = make([]uint32, 0, iter.Count(WireTypeVarint))
+			for iter.HasNext() {
+				v, err := iter.Uint32()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.U32 = append(p.U32, v)
+			}
+		case 6:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.U64 = make([]uint64, 0, iter.Count(WireTypeVarint))
+			for iter.HasNext() {
+				v, err := iter.Uint64()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.U64 = append(p.U64, v)
+			}
+		case 7:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.S32 = make([]int32, 0, iter.Count(WireTypeVarint))
+			for iter.HasNext() {
+				v, err := iter.Sint32()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.S32 = append(p.S32, v)
+			}
+		case 8:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.S64 = make([]int64, 0, iter.Count(WireTypeVarint))
+			for iter.HasNext() {
+				v, err := iter.Sint64()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.S64 = append(p.S64, v)
+			}
+		case 9:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.F32 = make([]uint32, 0, iter.Count(WireType32bit))
+			for iter.HasNext() {
+				v, err := iter.Fixed32()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.F32 = append(p.F32, v)
+			}
+		case 10:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.F64 = make([]uint64, 0, iter.Count(WireType64bit))
+			for iter.HasNext() {
+				v, err := iter.Fixed64()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.F64 = append(p.F64, v)
+			}
+		case 11:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.Sf32 = make([]int32, 0, iter.Count(WireType32bit))
+			for iter.HasNext() {
+				v, err := iter.Sfixed32()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.Sf32 = append(p.Sf32, v)
+			}
+		case 12:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.Sf64 = make([]int64, 0, iter.Count(WireType64bit))
+			for iter.HasNext() {
+				v, err := iter.Sfixed64()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.Sf64 = append(p.Sf64, v)
+			}
+		case 13:
+			iter, err := msg.Iterator(nil)
+			if err != nil {
+				t.Fatalf("unable to create iterator: %e", err)
+			}
+
+			p.Bool = make([]bool, 0, iter.Count(WireTypeVarint))
+			for iter.HasNext() {
+				v, err := iter.Bool()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.Bool = append(p.Bool, v)
+			}
+		case 32:
+			v, err := msg.Bool()
+			if err != nil {
+				t.Fatalf("unable to read after bool: %e", err)
+			}
+			p.After = v
+		default:
+			msg.Skip()
+		}
+	}
+
+	if err := msg.Error(); err != nil {
+		t.Fatalf("scanning error: %e", err)
+	}
+
+	return p
+}
