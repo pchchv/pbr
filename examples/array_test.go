@@ -14,7 +14,8 @@ type Field struct {
 	Data     []byte
 }
 
-// ReadIntoArray demonstrates how to get the raw data for each field in the message.
+// ReadIntoArray demonstrates how to get
+// the raw data for each field in the message.
 func Example_readIntoArray() {
 	child := &testmsg.Child{
 		Number:  *proto.Int64(123),
