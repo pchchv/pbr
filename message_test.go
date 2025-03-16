@@ -192,3 +192,175 @@ func TestMessage_Reset(t *testing.T) {
 
 	compare(t, s, message2)
 }
+
+func TestMessage_Message(t *testing.T) {
+	parent := &testmsg.Parent{
+		Child: &testmsg.Child{
+			Number:  *proto.Int64(123),
+			Numbers: []int64{1, 2, 3, -4, -5, -6, 7, 8},
+			Grandchild: []*testmsg.Grandchild{
+				{
+					Number:  *proto.Int64(111),
+					Numbers: []int64{-1, 2, -3, 4, -5, 6, -7, 8},
+				},
+				{
+					Number:  *proto.Int64(-222),
+					Numbers: []int64{1, -2, 3, -4, 5, -6, 7, -8},
+				},
+			},
+			After: *proto.Bool(true),
+		},
+		After: *proto.Bool(true),
+	}
+
+	data, err := proto.Marshal(parent)
+	if err != nil {
+		t.Fatalf("unable to marshal: %e", err)
+	}
+
+	t.Run("decode everything", func(t *testing.T) {
+		var gcmsg *Message // for reuse
+		p := &testmsg.Parent{}
+		msg := New(data)
+		for msg.Next() {
+			switch msg.FieldNumber() {
+			case 1:
+				cmsg, err := msg.Message(nil)
+				if err != nil {
+					t.Fatalf("unable to read message: %e", err)
+				}
+				p.Child = &testmsg.Child{}
+				for cmsg.Next() {
+					switch cmsg.FieldNumber() {
+					case 100:
+						v, err := cmsg.Int64()
+						if err != nil {
+							t.Fatalf("unable to read: %e", err)
+						}
+						p.Child.Number = v
+					case 200:
+						gcmsg, err = cmsg.Message(gcmsg)
+						if err != nil {
+							t.Fatalf("unable to read: %e", err)
+						}
+
+						gc := &testmsg.Grandchild{}
+						for gcmsg.Next() {
+							switch gcmsg.FieldNumber() {
+							case 1000:
+								v, err := gcmsg.Int64()
+								if err != nil {
+									t.Fatalf("unable to read: %e", err)
+								}
+								gc.Number = v
+							case 2000:
+								v, err := gcmsg.RepeatedInt64(gc.Numbers)
+								if err != nil {
+									t.Fatalf("unable to read: %e", err)
+								}
+								gc.Numbers = v
+							case 32000:
+								v, err := gcmsg.Bool()
+								if err != nil {
+									t.Fatalf("unable to read: %e", err)
+								}
+								gc.After = v
+							default:
+								gcmsg.Skip()
+							}
+						}
+
+						p.Child.Grandchild = append(p.Child.Grandchild, gc)
+					case 300:
+						v, err := cmsg.RepeatedInt64(p.Child.Numbers)
+						if err != nil {
+							t.Fatalf("unable to read: %e", err)
+						}
+						p.Child.Numbers = v
+					case 3200:
+						v, err := cmsg.Bool()
+						if err != nil {
+							t.Fatalf("unable to read: %e", err)
+						}
+						p.Child.After = v
+					default:
+						cmsg.Skip()
+					}
+				}
+			case 32:
+				v, err := msg.Bool()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.After = v
+			default:
+				msg.Skip()
+			}
+		}
+
+		if err := msg.Error(); err != nil {
+			t.Fatalf("scanning error: %e", err)
+		}
+
+		compare(t, p, parent)
+	})
+
+	t.Run("decode only part of the message", func(t *testing.T) {
+		msg := New(data)
+		p := &testmsg.Parent{}
+		for msg.Next() {
+			switch msg.FieldNumber() {
+			case 1:
+				_, err := msg.Message(nil)
+				if err != nil {
+					t.Fatalf("unable to read message: %e", err)
+				}
+
+				// don't do anything with the message
+			case 32:
+				v, err := msg.Bool()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.After = v
+			default:
+				msg.Skip()
+			}
+		}
+
+		if err := msg.Error(); err != nil {
+			t.Fatalf("scanning error: %e", err)
+		}
+
+		if p.After != true {
+			t.Errorf("should not require complete read of message")
+		}
+	})
+
+	t.Run("skip the message", func(t *testing.T) {
+		msg := New(data)
+		p := &testmsg.Parent{}
+		for msg.Next() {
+			switch msg.FieldNumber() {
+			case 1:
+				msg.Skip()
+			case 32:
+				v, err := msg.Bool()
+				if err != nil {
+					t.Fatalf("unable to read: %e", err)
+				}
+				p.After = v
+			default:
+				msg.Skip()
+			}
+		}
+
+		if err := msg.Error(); err != nil {
+			t.Fatalf("scanning error: %e", err)
+		}
+
+		if p.After != true {
+			t.Errorf("should skip embedded messages")
+		}
+	})
+}
